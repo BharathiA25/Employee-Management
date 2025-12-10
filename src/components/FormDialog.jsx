@@ -7,10 +7,11 @@ function FormDialog({open , onClose , onSave, editData}) {
      const textFieldStyle ={"& .MuiOutlinedInput-root": {
               // set radius for the input wrapper (affects background clipping)
               borderRadius: "12px",
+              
               // set radius for the visible outline
             "> fieldset": {
             borderRadius: "12px",
-            },
+             },
     }}; 
     useEffect(() => {
     if (editData && editData.image) {
@@ -64,14 +65,16 @@ function FormDialog({open , onClose , onSave, editData}) {
                         padding: 0,
                         borderRadius: "20px",
                         overflow: "hidden",
+                        backgroundColor : "#ffffffff"
                     }
                 }}>
                 <DialogTitle
                     sx={{
                         textAlign: 'center',
-                        fontWeight: '600'
+                        fontWeight: '700',
+                        color : editData ?"#e3be09ff" : "#20c62dff"
                     }}>
-                    Add Employee
+                    {editData ? "Edit Employee":"Add Employee"}
                 </DialogTitle>
 
 <DialogContent>
@@ -180,14 +183,13 @@ function FormDialog({open , onClose , onSave, editData}) {
       <Button
         variant="contained"
         sx={{
-          color: 'white',
-          backgroundColor: '#cbc54eff',
+          backgroundColor: editData ? "#e3be09ff" : "#20c62dff",
           borderRadius: '25px',
           textTransform: 'capitalize'
         }}
         type="submit"
       >
-        Save
+        {editData ? "Update" : "Add"}
       </Button>
     </DialogActions>
   </form>

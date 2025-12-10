@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid'
-import { Button } from '@mui/material'
+import { Box, Button } from '@mui/material'
 import FormDialog from './FormDialog'
 import { useEffect, useState } from 'react'
 function Employee() {
@@ -73,18 +73,55 @@ function Employee() {
 
   return (
     <div style={{ width: '100vw', height: '100vh'}}>
-      <div style={{height : '100px', width:'100%', backgroundColor :'#092c68ff'}}>
-        <h4 style={{textAlign:'center', color:'#fff'}}> Employee Management System</h4>
+      <div style={{height : '100px', width:'100%', backgroundColor :'#1a4ca2ff', display:'flex', justifyContent:'center',alignItems:'center'}}>
+        <h4 style={{color:'#fff', fontSize:'20px'}}> Employee Management System</h4>
       </div>
+      <div style={{display:'flex', flexDirection:'column',padding:'20px',gap:'20px'}}>
+        <h3>Employee List</h3>
+       <Box display="flex" justifyContent="flex-start">
       <Button
         variant="contained"
         onClick={() => setOpen(true)}
-        sx={{ marginBottom: 2 }}
+        sx={{  textTransform:'capitalize', backgroundColor:'#31b209ff'}}
       >
-        Add Employee
+        Add New Employee
       </Button>
+      </Box> 
 
-      <DataGrid rows={rows} columns={columns}  />
+      <DataGrid
+    rows={rows}
+    columns={columns}
+  sx={{
+    borderRadius: 2,
+    boxShadow: 3,
+    backgroundColor: "#ffffff",
+    padding: 1,
+
+    "& .MuiDataGrid-columnHeaders": {
+      backgroundColor: "#145cd9ff",
+      color: "#fff",
+    },
+    "&& .MuiDataGrid-columnHeaderTitle": { 
+      color: "#fff",
+      fontSize: "15px",
+      fontWeight: "bold",
+    },
+
+    "& .MuiDataGrid-row:hover": {
+      backgroundColor: "#eaf1ff",
+      cursor: "pointer",
+    },
+
+    "& .MuiDataGrid-cell": {
+      fontSize: "14px",
+    },
+
+    "& .MuiDataGrid-footerContainer": {
+      backgroundColor: "#f5f7ff",
+    }
+  }}
+  autoHeight
+/>
 
       {open && (
         <FormDialog
@@ -97,6 +134,7 @@ function Employee() {
           onSave={handleAddorEdit}
         />
       )}
+      </div>
     </div>
   )
 }
