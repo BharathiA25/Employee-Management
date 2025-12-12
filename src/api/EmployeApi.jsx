@@ -1,11 +1,21 @@
 import axios from 'axios'
 
-const API = "dummy"
+const API = "https://melodi-proprietorial-hue.ngrok-free.dev/employee"
 
-const getAllEmployee = () => axios.get();
+export const getAllEmployee = () => axios.get(API ,{headers: { "ngrok-skip-browser-warning": "true" }})
 
-const addEmployee = (data) => axios.post();
+export const addEmployee = (data) => axios.post(API, data,{
+     headers: { 
+      "Content-Type": "multipart/form-data",
+      "ngrok-skip-browser-warning": "true"
+    }
+});
 
-const editEmployee = (id, data) => axios.put();
+export const editEmployee = (id, data) => axios.put(`${API}/${id}`,data,{
+     headers: { 
+      "Content-Type": "multipart/form-data",
+      "ngrok-skip-browser-warning": "true"
+    }
+});
 
-const deleteEmployee = (id) => axios.delete();
+export const deleteEmployee = (id) => axios.delete(`${API}/${id}`);

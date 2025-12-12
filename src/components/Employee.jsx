@@ -1,142 +1,252 @@
-import { DataGrid } from '@mui/x-data-grid'
-import { Box, Button } from '@mui/material'
-import FormDialog from './FormDialog'
-import { useEffect, useState } from 'react'
+import { DataGrid } from '@mui/x-data-grid';
+import { Box, Button } from '@mui/material';
+import FormDialog from './FormDialog';
+import { useEffect, useState } from 'react';
+import { getAllEmployee, editEmployee, addEmployee, deleteEmployee } from '../api/EmployeApi';
+import DeleteDialog from './DeleteDialog';
+
+const BASE_URL = "https://melodi-proprietorial-hue.ngrok-free.dev";
+
 function Employee() {
-  const [rows, setRows] = useState([])
-  const [open, setOpen] = useState(false)
-  const [editData, setEditData] = useState(null)
+  const [rows, setRows] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [editData, setEditData] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("employee"));
-    if (saved) setRows(saved);
+    fetchEmployees();
   }, []);
 
-  useEffect(() => {
-    if (rows.length > 0) {
-      localStorage.setItem("employee", JSON.stringify(rows));
+  const fetchEmployees = async () => {
+    try {
+      const res = await getAllEmployee();
+      let data = res.data;
+
+      // If backend returns single object → convert to array
+      if (!Array.isArray(data)) {
+        data = [data];
+      }
+
+      const rowsWithId = data.map((item) => ({
+        ...item,
+        id: item.id
+      }));
+      setRows(rowsWithId);
+    } catch (error) {
+      console.log("fetching error :", error);
     }
-  }, [rows]);
+  };
+  const handleAddorEdit = async (employee) => {
+    try {
+        const formData = new FormData();
+        formData.append("name", employee.name);
+        formData.append("age", employee.age);
+        formData.append("email", employee.email);
+        formData.append("phone", employee.phone);
+        formData.append("department", employee.department);
+        if(employee.id){
+          if(employee.imageFile){
+          formData.append("image", employee.imageFile);
+        }
+        await editEmployee(employee.id, formData)
+      }
+      else{
+        formData.append("image", employee.imageFile);
+        await addEmployee(formData);
+      }
+
+      
+      fetchEmployees();
+    }
+    catch (error) {
+      console.log("Add or edit error ", error)
+    }
+    setOpen(false);
+    setEditData(null);
+  };
+  const handleDeleteEmployee = async (id) => {
+    try {
+      await deleteEmployee(deleteId);
+      setDeleteOpen(false);
+      fetchEmployees();
+    } catch (error) {
+      console.log("Delete Employee : ", error);
+    }
+  }
+  
+
+  const handleDelete = async (id) => {
+    setDeleteId(id);
+    setDeleteOpen(true);
+  }
+  const handleEdit = (data) => {
+    setEditData(data);
+    setOpen(true);
+  };
 
   const columns = [
-    { field: 'id', headerName: 'ID', width: 80 },
-    {field : 'image',
-      headerName : 'Image', 
-      width : 100,
-    renderCell : (params) =>(
-      <img 
-      src={params.row.image} 
-      alt="employee" 
-      style={{ width: "50px", height: "50px", borderRadius: "8px", objectFit: "cover" }} 
-    />
-    )},
-    { field: 'name', headerName: 'Name', width: 150 },
-    { field: 'age', headerName: 'Age', width: 80 },
-    { field: 'email', headerName: 'Email', width: 200 },
-    { field: 'phone', headerName: 'Mobile Number', width: 130 },
-    { field: 'department', headerName: 'Department', width: 140 },
+    { field: 'id', headerName: 'ID', width: 100 },
+{
+  field: 'image',
+  headerName: 'Image',
+  width: 120,
+  renderCell: (params) => {
+    if (!params.row.image) return null;
+
+    // Replace Windows backslashes with slashes
+    let imgPath = params.row.image.replace(/\\/g, "/");
+
+    // Remove leading slash to avoid double slashes
+    if (imgPath.startsWith("/")) {
+      imgPath = imgPath.slice(1);
+    }
+
+    // Encode URI to handle spaces and special characters
+    const fullURL = `${BASE_URL}/${encodeURI(imgPath)}`;
+    //console.log("full url :", fullURL)
+    return (
+      <img
+        src={fullURL}
+        alt="employee"
+        style={{
+          display:'block',
+          maxWidth:'100%',
+          maxHeight:'100%',
+          borderRadius: "8px",
+          objectFit: "cover"
+        }}
+      />
+    );
+  }
+},
+    
+    { field: 'name', headerName: 'Name', width: 120 },
+    { field: 'age', headerName: 'Age', width: 110 },
+    { field: 'email', headerName: 'Email', width: 240 },
+    { field: 'phone', headerName: 'Mobile Number', width: 200 },
+    { field: 'department', headerName: 'Department', width: 180 },
+
     {
       field: 'action',
       headerName: 'Action',
       width: 200,
       renderCell: (params) => (
         <>
-          <Button variant='contained' color='success' size='small' onClick={() => handleEdit(params.row)} style={{ marginRight: 10 }}>
+          <Button
+            variant='contained'
+            color='warning'
+            size='small'
+            onClick={() => handleEdit(params.row)}
+            style={{ marginRight: 10 }}
+          >
             Edit
           </Button>
-          <Button variant='contained' color='error' size='small' onClick={() => handleDelete(params.row.id)} >
+          <Button
+            variant='contained'
+            color='error'
+            size='small'
+            onClick={() => handleDelete(params.row.id)}
+          >
             Delete
           </Button>
         </>
       )
     }
-  ]
-
-  const handleAddorEdit = (employee) => {
-    if (employee.id) {
-      setRows((prev) => prev.map((row) => (row.id === employee.id ? { ...employee } : row)))
-    }
-    else {
-      const newEmployee = { ...employee, id: rows.length > 0 ? rows[rows.length - 1].id + 1 : 1 };
-      setRows((prev) => [...prev, newEmployee])
-    }
-    setOpen(false);
-    setEditData(null);
-  }
-
-  const handleDelete = (id) => {
-    setRows(rows.filter((item) => item.id !== id))
-  }
-  const handleEdit = (data) => {
-    setEditData(data)
-    setOpen(true)
-  }
-
+  ];
+  
   return (
-    <div style={{ width: '100vw', height: '100vh'}}>
-      <div style={{height : '100px', width:'100%', backgroundColor :'#1a4ca2ff', display:'flex', justifyContent:'center',alignItems:'center'}}>
-        <h4 style={{color:'#fff', fontSize:'20px'}}> Employee Management System</h4>
-      </div>
-      <div style={{display:'flex', flexDirection:'column',padding:'20px',gap:'20px'}}>
-        <h3>Employee List</h3>
-       <Box display="flex" justifyContent="flex-start">
-      <Button
-        variant="contained"
-        onClick={() => setOpen(true)}
-        sx={{  textTransform:'capitalize', backgroundColor:'#31b209ff'}}
+    <div style={{ width: '100vw', height: '100vh' }}>
+      <div
+        style={{
+          height: '100px',
+          width: '100%',
+          backgroundColor: '#1a4ca2ff',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
       >
-        Add New Employee
-      </Button>
-      </Box> 
+        <h4 style={{ color: '#fff', fontSize: '20px' }}>Employee Management System</h4>
+      </div>
 
-      <DataGrid
-    rows={rows}
-    columns={columns}
-  sx={{
-    borderRadius: 2,
-    boxShadow: 3,
-    backgroundColor: "#ffffff",
-    padding: 1,
+      <div style={{ display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px' }}>
+        <h3>Employee List</h3>
 
-    "& .MuiDataGrid-columnHeaders": {
-      backgroundColor: "#145cd9ff",
-      color: "#fff",
-    },
-    "&& .MuiDataGrid-columnHeaderTitle": { 
-      color: "#fff",
-      fontSize: "15px",
-      fontWeight: "bold",
-    },
+        <Box display="flex" justifyContent="flex-start">
+          <Button
+            variant="contained"
+            onClick={() => setOpen(true)}
+            sx={{ textTransform: 'capitalize', backgroundColor: '#31b209ff' }}
+          >
+            Add New Employee
+          </Button>
+        </Box>
+  <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+  <div style={{ width: "fit-content", margin:"0 auto" }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          autoHeight
+          getRowId={(row) => row.id}
+          disableExtendRowFullWidth
+          disableColumnResize
+          columnBuffer={0}
 
-    "& .MuiDataGrid-row:hover": {
-      backgroundColor: "#eaf1ff",
-      cursor: "pointer",
-    },
+sx={{
+  borderRadius:'20px',
+  "& .MuiDataGrid-columnHeaders": {
+    backgroundColor: "#1656ccff !important",
+  },
 
-    "& .MuiDataGrid-cell": {
-      fontSize: "14px",
-    },
+  "& .MuiDataGrid-columnHeader": {
+    backgroundColor: "#1656ccff !important",
+    color: "#fff !important",
+    fontWeight: "bold",
+    fontSize: "16px",
+  },
 
-    "& .MuiDataGrid-footerContainer": {
-      backgroundColor: "#f5f7ff",
-    }
-  }}
-  autoHeight
+  // THE FIX: center header content
+  "& .MuiDataGrid-columnHeader .MuiDataGrid-columnHeaderTitleContainer": {
+    display: "flex",
+    justifyContent: "center",
+    width: "100%",
+  },
+
+  // Center cell text
+  "& .MuiDataGrid-cell": {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+  },
+}}
+
+
 />
-
-      {open && (
-        <FormDialog
-          open={open}
-          onClose={() => {
-            setEditData(null)
-            setOpen(false)
-          }}
-          editData={editData}
-          onSave={handleAddorEdit}
-        />
-      )}
+        </div>
+        </div>
+        {open && (
+          <FormDialog
+            open={open}
+            onClose={() => {
+              setEditData(null);
+              setOpen(false);
+            }}
+            editData={editData}
+            onSave={handleAddorEdit}
+          />
+        )}
+        {deleteOpen && (
+          <DeleteDialog
+            open={deleteOpen}
+            onClose={() => {
+              setDeleteOpen(false)
+            }}
+            onDelete={ () => handleDeleteEmployee(deleteId)} />
+        )}
       </div>
     </div>
-  )
+  );
 }
 
-export default Employee
+export default Employee;
