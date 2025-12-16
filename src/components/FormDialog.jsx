@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react'
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, MenuItem } from '@mui/material'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, MenuItem } from '@mui/material'
 function FormDialog({ open, onClose, onSave, editData }) {
   const [preview, setPreview] = useState(null);
+
   const textFieldStyle = {
     "& .MuiOutlinedInput-root": {
-      // set radius for the input wrapper (affects background clipping)
       borderRadius: "12px",
-
-      // set radius for the visible outline
       "> fieldset": {
         borderRadius: "12px",
       },
     }
   };
-  const BASE_URL = "https://melodi-proprietorial-hue.ngrok-free.dev";
+
+const BASE_URL = "https://melodi-proprietorial-hue.ngrok-free.dev";
 
   useEffect(() => {
     if (editData?.image) {
-       const cleanPath = editData.image.replace(/\\/g, "/");
+      const cleanPath = editData.image.replace(/\\/g, "/");
       setPreview(`${BASE_URL}/${cleanPath}`);
 
     }
   }, [editData]);
+  
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -33,7 +33,7 @@ function FormDialog({ open, onClose, onSave, editData }) {
       department: editData?.department || "",
       phone: editData?.phone || "",
       image: editData?.image?.replace(/\\/g, "/") || "",
-      imageFile : null
+      imageFile: null
 
     },
     validationSchema: Yup.object({
@@ -44,21 +44,22 @@ function FormDialog({ open, onClose, onSave, editData }) {
       phone: Yup.string().matches(/^[0-9]{10}$/, "Must be 10 digits").required("Number is required"),
       image: Yup.string().test("required-image", "Image is required", function (value) {
         if (editData) return true; // skip when editing
-        return !! this.parent.imageFile;
+        return !!this.parent.imageFile;
       })
     }),
     onSubmit: (values) => {
       console.log("Form Submitted", values)
-      onSave({ ...values, imageFile : values.imageFile,id: editData?.id });
+      onSave({ ...values, imageFile: values.imageFile, id: editData?.id });
     }
 
   })
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     formik.setFieldValue("imageFile", file);
+    formik.setFieldValue("image", file.name)
     if (file) {
       setPreview(URL.createObjectURL(file));
-       }
+    }
   }
   return (
     <div>
@@ -181,11 +182,12 @@ function FormDialog({ open, onClose, onSave, editData }) {
                   onBlur={formik.handleBlur}
                   onChange={handleImageChange}
                 />
-                {formik.values.image && typeof formik.values.image === "string" ? (
+                {formik.values.image && (
                   <span style={{ fontSize: "14px", color: "#333" }}>
-                    Selected: {formik.values.image}
+                    Selected: {formik.values.image.split("/").pop()}
                   </span>
-                ) : null}
+                )}
+
                 {formik.touched.image && formik.errors.image && (
                   <p style={{ color: "red", margin: 0 }}>{formik.errors.image}</p>
                 )}
